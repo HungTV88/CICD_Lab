@@ -24,6 +24,12 @@ variable "github_repo" {
   type        = string
 }
 
+variable "environment_name" {
+  description = "GitHub environment name gating the apply job"
+  type        = string
+  default     = "production"
+}
+
 variable "github_role_name" {
   description = "Name of the IAM role assumed by GitHub Actions"
   type        = string
