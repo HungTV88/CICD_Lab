@@ -72,14 +72,11 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
+      - name: Check S3 connectivity
+        run: curl -v --max-time 10 "https://s3.${{ vars.AWS_REGION }}.amazonaws.com" || echo "CONNECTIVITY_FAILED"
+
       - name: Terraform init
         run: terraform init
 
-      - name: Download plan
-        uses: actions/download-artifact@v4
-        with:
-          name: tfplan
-          path: terraform
-
       - name: Terraform apply
-        run: terraform apply -auto-approve tfplan
+        run: terraform apply -auto-approve
