@@ -19,8 +19,8 @@ defaults:
     working-directory: terraform
 
 jobs:
-  terraform:
-    name: Terraform plan/apply
+  plan:
+    name: Terraform plan
     runs-on: ubuntu-latest
 
     steps:
@@ -48,6 +48,42 @@ jobs:
       - name: Terraform plan
         run: terraform plan -out=tfplan
 
-      - name: Terraform apply
+      - name: Upload plan
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan
+          path: terraform/tfplan
+          retention-days: 1
+
+  apply:
+    name: Terraform apply
+    needs: plan
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform init
+        run: terraform init
+
+      - name: Download plan
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan
+          path: terraform
+
+      - name: Terraform apply
         run: terraform apply -auto-approve tfplan

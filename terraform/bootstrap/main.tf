@@ -45,13 +45,13 @@ data "aws_iam_policy_document" "github_trust" {
       values   = ["sts.amazonaws.com"]
     }
 
-    # Allow both: PR events (plan job) and pushes to main from a merge (apply job).
     condition {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
       values = [
-        "repo:${var.github_user}/${var.github_repo}:pull_request",
-        "repo:${var.github_user}/${var.github_repo}:ref:refs/heads/main",
+        "repo:${var.github_user}@*/${var.github_repo}@*:pull_request",
+        "repo:${var.github_user}@*/${var.github_repo}@*:ref:refs/heads/main",
+        "repo:${var.github_user}@*/${var.github_repo}@*:environment:${var.environment_name}",
       ]
     }
   }
