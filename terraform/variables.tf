@@ -16,5 +16,6 @@ variable "tags" {
   default = {
     Project   = "cicd-lab"
     ManagedBy = "terraform"
+    Owner     = "HungTV88"
   }
 }
