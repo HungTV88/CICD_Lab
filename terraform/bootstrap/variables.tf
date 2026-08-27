@@ -9,10 +9,9 @@ variable "state_bucket_name" {
   type        = string
 }
 
-variable "lock_table_name" {
-  description = "Name of the DynamoDB table for state locking"
+variable "oidc_provider_arn" {
+  description = "ARN of the existing GitHub Actions OIDC provider"
   type        = string
-  default     = "cicd-lab-tfstate-lock"
 }
 
 variable "github_user" {

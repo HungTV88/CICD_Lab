@@ -29,27 +29,6 @@ resource "aws_s3_bucket_public_access_block" "state" {
   restrict_public_buckets = true
 }
 
-resource "aws_dynamodb_table" "lock" {
-  name         = var.lock_table_name
-  billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "LockID"
-
-  attribute {
-    name = "LockID"
-    type = "S"
-  }
-}
-
-data "tls_certificate" "github" {
-  url = "https://token.actions.githubusercontent.com"
-}
-
-resource "aws_iam_openid_connect_provider" "github" {
-  url             = "https://token.actions.githubusercontent.com"
-  client_id_list  = ["sts.amazonaws.com"]
-  thumbprint_list = [data.tls_certificate.github.certificates[0].sha1_fingerprint]
-}
-
 data "aws_iam_policy_document" "github_trust" {
   statement {
     effect  = "Allow"
@@ -57,7 +36,7 @@ data "aws_iam_policy_document" "github_trust" {
 
     principals {
       type        = "Federated"
-      identifiers = [aws_iam_openid_connect_provider.github.arn]
+      identifiers = [var.oidc_provider_arn]
     }
 
     condition {
@@ -71,8 +50,8 @@ data "aws_iam_policy_document" "github_trust" {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
       values = [
-        "repo:${var.github_org}/${var.github_repo}:pull_request",
-        "repo:${var.github_org}/${var.github_repo}:ref:refs/heads/main",
+        "repo:${var.github_user}/${var.github_repo}:pull_request",
+        "repo:${var.github_user}/${var.github_repo}:ref:refs/heads/main",
       ]
     }
   }
@@ -85,7 +64,7 @@ resource "aws_iam_role" "github_actions" {
 
 data "aws_iam_policy_document" "github_permissions" {
   statement {
-    sid    = "ManageDemoBucket"
+    sid    = "ManageBucket"
     effect = "Allow"
     actions = [
       "s3:CreateBucket",
@@ -98,7 +77,7 @@ data "aws_iam_policy_document" "github_permissions" {
       "s3:GetBucketTagging",
       "s3:GetBucketLocation",
     ]
-    resources = ["arn:aws:s3:::${var.demo_bucket_prefix}-*"]
+    resources = ["arn:aws:s3:::${var.bucket_prefix}-*"]
   }
 
   statement {
@@ -113,13 +92,6 @@ data "aws_iam_policy_document" "github_permissions" {
     effect    = "Allow"
     actions   = ["s3:ListBucket"]
     resources = [aws_s3_bucket.state.arn]
-  }
-
-  statement {
-    sid       = "StateLockTable"
-    effect    = "Allow"
-    actions   = ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:DeleteItem"]
-    resources = [aws_dynamodb_table.lock.arn]
   }
 }
 
