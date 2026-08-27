@@ -5,6 +5,11 @@ resource "random_id" "suffix" {
 resource "aws_s3_bucket" "this" {
   bucket = "${var.bucket_name_prefix}-${random_id.suffix.hex}"
   tags   = var.tags
+
+  # Fail fast instead of hanging indefinitely if create gets stuck.
+  timeouts {
+    create = "1m"
+  }
 }
 
 resource "aws_s3_bucket_versioning" "this" {

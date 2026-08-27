@@ -31,6 +31,12 @@ jobs:
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
+        with:
+          # Pinned instead of "latest" (currently 1.16.0) — that version hangs
+          # indefinitely after aws_s3_bucket create succeeds, with no further
+          # AWS API calls made (confirmed via CloudTrail), suggesting a local
+          # CLI/provider deadlock rather than an AWS-side issue.
+          terraform_version: "1.15.8"
 
       - name: Terraform fmt check
         run: terraform fmt -check -recursive
@@ -71,6 +77,8 @@ jobs:
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.15.8"
 
       - name: Check S3 connectivity
         run: curl -v --max-time 10 "https://s3.${{ vars.AWS_REGION }}.amazonaws.com" || echo "CONNECTIVITY_FAILED"
